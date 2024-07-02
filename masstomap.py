@@ -11,10 +11,23 @@
 import re
 import os
 import sys
-import nmap3
+import nmap
 import argparse
 import xml.dom.minidom
 import threading
+
+
+def ensure_str(var):
+    if isinstance(var, bytes):
+        var = var.decode('utf-8')
+    elif not isinstance(var, str):
+        raise TypeError("Variable must be of type str or bytes")
+    return var
+
+def check_root():
+    if os.geteuid() != 0:
+        print("This script must be run as root or with sudo.")
+        sys.exit(1)
 
 version = "v0.5"
 def banner():
@@ -194,7 +207,7 @@ def executeNmapThread(ip, target_ports, verbose, NMAP_ARGUMENTS, output):
         print("    + Dumping report files (text,xml,grepable)")
     xmlreportfile = output + ".nmap.xml." + ip
     fx = open(xmlreportfile, "w")
-    fx.write(xmlout)
+    fx.write(ensure_str(xmlout))
     fx.close()
 
 def wrapupxml(user_output, verbose):
@@ -276,6 +289,8 @@ if __name__ == "__main__":
     if os.path.isfile(user_masscan) == False:
         print("[x] The specified masscan file can't be found.")
         sys.exit(1)
+    
+    check_root()
 
     #if user_output and noscan:
     #    print("[x] -n and -o can't work together. Choose just one.")
